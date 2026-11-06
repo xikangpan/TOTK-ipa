@@ -33,11 +33,11 @@ index 414f53a..8a23579 100644
 +    }
 +   }
 +  }
-++  /* iOS without extended virtual addressing: reserve the heap/stack and
++  /* iOS without extended virtual addressing: reserve the heap/stack and
 +     alias separately when no contiguous guest region fits. Both must stay
 +     below the 39-bit guest limit, and low must precede alias for GetInfo. */
 +  if(!low_space){
-+   fprintf(stderr,"[totk-mem] trying separate low and alias reservations\\n");
++   fprintf(stderr,"[totk-mem] trying separate low and alias reservations\n");
 +   uint8_t *separate_low=reserve_in_gap(LOW_SIZE,0);
 +   if(separate_low){
 +    for(uint64_t g=want;g>=least&&!alias_space;g-=1ULL<<30){
@@ -46,7 +46,7 @@ index 414f53a..8a23579 100644
 +    }
 +    if(alias_space){
 +     low_space=separate_low;
-+     fprintf(stderr,"[totk-mem] split reservation: low %#llx + %.2f GiB; alias %#llx + %.2f GiB\\n",
++     fprintf(stderr,"[totk-mem] split reservation: low %#llx + %.2f GiB; alias %#llx + %.2f GiB\n",
 +      (unsigned long long)(uintptr_t)low_space,(double)LOW_SIZE/(1024.0*1024.0*1024.0),
 +      (unsigned long long)(uintptr_t)alias_space,(double)alias_len/(1024.0*1024.0*1024.0));
 +    }else{
