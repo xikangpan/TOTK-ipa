@@ -1,0 +1,42 @@
+diff --git a/games/totk/runtime/services.c b/games/totk/runtime/services.c
+index e6ab20e..414f53a 100644
+--- a/games/totk/runtime/services.c
++++ b/games/totk/runtime/services.c
+@@ -74,9 +74,34 @@ static uint64_t app_pool(void){static uint64_t v;if(!v){const char *e=getenv("TO
+ #else
+ #define ASLR_SIZE (GUEST_ADDRESS_LIMIT-(uintptr_t)low_space)
+ #endif
+-static uint8_t *reserve_fixed(uint64_t at,uint64_t size){
+- mach_vm_address_t a=at;   /* FIXED without OVERWRITE: fails instead of replacing an existing mapping */
+- return mach_vm_map(mach_task_self(),&a,size,0,VM_FLAGS_FIXED,MEMORY_OBJECT_NULL,0,FALSE,VM_PROT_NONE,VM_PROT_ALL,VM_INHERIT_DEFAULT)==KERN_SUCCESS?(uint8_t *)(uintptr_t)a:NULL;
++static uint8_t *reserve_fixed(uint64_t at, uint64_t size) {
++    mach_vm_address_t a = at;
++
++    kern_return_t kr = mach_vm_map(
++        mach_task_self(),
++        &a,
++        size,
++        0,
++        VM_FLAGS_FIXED,
++        MEMORY_OBJECT_NULL,
++        0,
++        FALSE,
++        VM_PROT_NONE,
++        VM_PROT_ALL,
++        VM_INHERIT_DEFAULT
++    );
++
++    if (kr != KERN_SUCCESS) {
++        fprintf(stderr,
++            "[totk-mem] mach_vm_map failed: address=%#llx size=%.2f GiB kr=%d\n",
++            (unsigned long long)at,
++            (double)size / (1024.0 * 1024.0 * 1024.0),
++            kr
++        );
++        return NULL;
++    }
++
++    return (uint8_t *)(uintptr_t)a;
+ }
+ #define GUEST_ALIGN (2ULL<<20)
+ /* Reserve size bytes in a free gap (2 MiB aligned). The end of the map is
