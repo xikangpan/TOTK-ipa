@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """TOTK-ipa import: turn your own Tears of the Kingdom dump and prod.keys into an iPhone/iPad IPA, on Windows, Linux or a
 Mac, with the app shell built by GitHub (no game files ever leave your computer). On Windows the installer's builder
 window (kit/gui.py) runs this script.
@@ -184,7 +184,14 @@ def build_payload(tree, shell, payload, logs):
     (res / 'romfs').mkdir()
 
     external = payload.parent / 'ExternalRomFS'
-    external.mkdir(parents=True, exist_ok=True)
+
+    if external.exists():
+        raise RuntimeError(
+            f'External RomFS directory already exists: {external}. '
+            'Move or rename it before rebuilding.'
+        )
+
+    external.mkdir(parents=True, exist_ok=False)
 
     for f in romfs.iterdir():
         if f.is_file():

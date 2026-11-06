@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """The import tool's last part on synthetic game files: the Python environment as MacNativeGames' scripts expect it
 (prepare_venv, with junctions on Windows), the module parts into the real app shell (build_payload), GameData and the
 IPA (write_ipa). Checks the IPA's entries, the executable's mode and that every section holds what was embedded.
@@ -76,13 +76,15 @@ def main():
             names = set(z.namelist())
             shell_files = {'Payload/TOTK.app/' + p.relative_to(shell).as_posix() for p in shell.rglob('*') if p.is_file()}
             for want in (*shell_files, 'Payload/TOTK.app/GameData/totk-late.bin',
-                         'Payload/TOTK.app/GameData/romfs/romfs.bin', 'Payload/TOTK.app/GameData/shared-fonts/0-font0.bfttf',
+                         'Payload/TOTK.app/GameData/shared-fonts/0-font0.bfttf',
                          'Payload/TOTK.app/GameData/shader-seed/seed-manifest.json',
                          'Payload/TOTK.app/GameData/shader-seed/pso_title.tsv'):
                 assert want in names, f'{want} missing from the IPA'
             info = z.getinfo('Payload/TOTK.app/TOTK')
             assert info.external_attr >> 16 == 0o100755, oct(info.external_attr >> 16)
-            assert z.getinfo('Payload/TOTK.app/GameData/romfs/romfs.bin').file_size == 100000
+            assert 'Payload/TOTK.app/GameData/romfs/romfs.bin' not in names
+            assert (root / 'ExternalRomFS/romfs.bin').stat().st_size == 100000
+            assert (root / 'ExternalRomFS/runtime-index.bin').is_file()
             exe = z.read('Payload/TOTK.app/TOTK')
         m = macho.MachO(exe)
         sizes = {s.name: s.size for seg in m.segments for s in seg.sections}
