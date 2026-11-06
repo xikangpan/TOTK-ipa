@@ -122,6 +122,9 @@ jobs:
         run: |
           brew install xcodegen cmake ninja
           xcodebuild -version
+          # Xcode 26 installs the Metal compiler as an optional component on hosted runners.
+          # Without it, CompileMetalFile fails with 'missing Metal Toolchain'.
+          xcodebuild -downloadComponent MetalToolchain
           xcrun --sdk iphoneos --show-sdk-path
           # Xcode 26's Metal compiler is an optional component on hosted Intel runners.
           xcodebuild -downloadComponent MetalToolchain
