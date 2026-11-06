@@ -24,7 +24,7 @@ from pathlib import Path
 KIT = Path(__file__).resolve().parent
 MNG = KIT / 'MacNativeGames'
 sys.path.insert(0, str(KIT / 'tools'))
-import export_v143, late_config, macho
+import export_v143, late_config, macho, app_icon
 
 VERSION = 'v143'
 NAMES = late_config.NAMES
@@ -170,6 +170,7 @@ def build_payload(tree, shell, payload, logs):
     if payload.exists():
         shutil.rmtree(payload)
     shutil.copytree(shell, app, symlinks=True)
+    app_icon.install_icon(app)  # Embed artwork and register it for iPhone/iPad Home Screen.
     rewritten = tree / f'rewritten/{VERSION}'
     layout = tree / f'analysis/{VERSION}-port/runtime-layout.json'
     modules = {m['name']: m for m in json.loads(layout.read_text())}
