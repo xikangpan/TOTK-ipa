@@ -88,7 +88,9 @@ jobs:
 
   shell-macos:
     needs: resolve
-    runs-on: macos-26
+    # macos-26 jobs were cancelled before any steps started on two attempts.
+    # Use the broadly available macOS 15 runner; Xcode version is checked below.
+    runs-on: macos-15
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
