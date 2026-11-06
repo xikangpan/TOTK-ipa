@@ -1,0 +1,16 @@
+name: Diagnose macOS runner
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos-smoke-test:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - name: Confirm runner and Xcode
+        run: |
+          echo "Runner: $RUNNER_OS $RUNNER_ARCH"
+          sw_vers
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
