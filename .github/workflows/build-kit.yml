@@ -98,7 +98,9 @@ jobs:
       - name: Fetch MacNativeGames
         run: git init -q mng && git -C mng fetch -q --depth 1 "$MNG_URL" ${{ needs.resolve.outputs.sha }} && git -C mng checkout -q FETCH_HEAD
       - name: Apply external RomFS loader patch
-        run: git -C mng apply "$GITHUB_WORKSPACE/external-romfs.patch"
+        run: |
+          git -C mng apply --check "$GITHUB_WORKSPACE/external-romfs.patch"
+          git -C mng apply "$GITHUB_WORKSPACE/external-romfs.patch"
       - name: Tools for the iOS build
         run: |
           brew install xcodegen cmake ninja
@@ -165,6 +167,12 @@ jobs:
           git init -q mng
           git -C mng fetch -q --depth 1 $env:MNG_URL ${{ needs.resolve.outputs.sha }}
           git -C mng checkout -q FETCH_HEAD
+      - name: Apply external RomFS loader patch
+        run: |
+          git -C mng apply --check external-romfs.patch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git -C mng apply external-romfs.patch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build hactool, SPIRV-Cross and the shader translator for Windows
         run: |
           $msys = "${{ steps.msys2.outputs.msys2-location }}"
