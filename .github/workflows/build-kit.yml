@@ -88,15 +88,21 @@ jobs:
 
   shell-macos:
     needs: resolve
-    # macos-26 jobs were cancelled before any steps started on two attempts.
-    # Use the broadly available macOS 15 runner; Xcode version is checked below.
-    runs-on: macos-15
+    # ARM macOS 26 and 15 runners have repeatedly been cancelled before checkout.
+    # Try GitHub's separate standard Intel pool; Xcode cross-compiles the iOS arm64 app.
+    runs-on: macos-15-intel
     timeout-minutes: 120
+    permissions:
+      contents: read
+      actions: read  # read the previously successful arm64 helper-tools artifact
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14'
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.3'
       - name: Fetch MacNativeGames
         run: git init -q mng && git -C mng fetch -q --depth 1 "$MNG_URL" ${{ needs.resolve.outputs.sha }} && git -C mng checkout -q FETCH_HEAD
       - name: Apply external RomFS loader patch
@@ -136,11 +142,18 @@ jobs:
           python kit/selftest/check_export.py ./export_check
       - name: Filling the real shell keeps a valid signature
         run: python kit/selftest/macho_check.py out/shell/v143/TOTK.app/TOTK
-      - name: Build hactool, SPIRV-Cross and the shader translator for macOS
-        run: python kit/build_tools.py mng out/tools/macos-arm64
-      - run: |
-          tar -C out/shell -czf shell.tar.gz v143
-          tar -C out/tools -czf tools-macos-arm64.tar.gz macos-arm64
+      # macOS arm64 helper tools were already built successfully for the same pinned
+      # MacNativeGames commit in run 42177115994. Intel cannot run the upstream
+      # arm64-only prebuilt translator, so reuse that verified artifact instead.
+      - name: Reuse compatible macOS arm64 helper tools
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out/prior-tools
+          gh run download 42177115994 --repo "$GITHUB_REPOSITORY" --name tools-macos-arm64 --dir out/prior-tools
+          test -s out/prior-tools/tools-macos-arm64.tar.gz
+          cp out/prior-tools/tools-macos-arm64.tar.gz tools-macos-arm64.tar.gz
+      - run: tar -C out/shell -czf shell.tar.gz v143
       - uses: actions/upload-artifact@v4
         with:
           name: shell
