@@ -112,12 +112,19 @@ def prepare_tree(work, logs):
     return tree
 
 
+def venv_command(tree, executable='python'):
+    """Use the actual Windows venv executable, not upstream's Unix-only bin path."""
+    if WINDOWS:
+        return tree / '.venv' / 'Scripts' / (executable + '.exe')
+    return tree / '.venv' / 'bin' / executable
+
+
 def prepare_seed(tree, bins, logs):
     """build_app.step_shaders with this computer's translator and SPIRV-Cross (built by the kit's workflow)."""
     translator, spirv = bins / f'totk_xlate{EXE}', bins / f'spirv-cross{EXE}'
     say('3/4 shaders: discovering and translating startup shaders from your game data (several minutes)')
     with (logs / 'prepare-shader-seed.log').open('w') as log:
-        p = subprocess.run([tree / '.venv/bin/python', 'scripts/prepare_shader_seed.py',
+        p = subprocess.run([venv_command(tree), 'scripts/prepare_shader_seed.py',
                             '--romfs', tree / f'extracted/{VERSION}/romfs', '--output', tree / f'build/shader-seed/{VERSION}',
                             '--translator', translator, '--spirv-cross', spirv, '--version', VERSION,
                             '--modules', tree / f'rewritten/{VERSION}'], cwd=tree, stdout=log, stderr=subprocess.STDOUT)
@@ -138,7 +145,7 @@ def seed_for_ios(tree, seed, logs):
                          if f.is_file() and f.name not in ('seed-manifest.json', 'shader_map.tsv')}
     (seed / 'seed-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     with (logs / 'shader-list.log').open('w') as log:
-        subprocess.run([tree / '.venv/bin/python', tree / 'scripts/shader_list.py', 'export', tree / 'assets/shader_list.tsv',
+        subprocess.run([venv_command(tree), tree / 'scripts/shader_list.py', 'export', tree / 'assets/shader_list.tsv',
                         logs / 'pso_manifest.tsv', seed / 'pso_title.tsv'], cwd=tree, check=True, stdout=log, stderr=subprocess.STDOUT)
 
 
@@ -272,6 +279,20 @@ def main(argv):
     t0 = time.time()
     tree = prepare_tree(work, logs)
     B.build_hactool = lambda tree, logs: bins / f'hactool{EXE}'   # built by the kit's workflow for this computer
+    if WINDOWS:
+        # MacNativeGames assumes Unix venv/bin/python and venv/bin/nsz. On
+        # Windows subprocess.CreateProcess needs the real Scripts/*.exe path.
+        upstream_run = B.run
+        def windows_run(cmd, log, cwd=None, env=None, quiet=True):
+            cmd = list(cmd)
+            if cmd:
+                executable = str(cmd[0]).replace('\\', '/').lower()
+                for name in ('python', 'nsz'):
+                    if executable.endswith('/.venv/bin/' + name):
+                        cmd[0] = str(Path(cmd[0]).parent.parent / 'Scripts' / (name + '.exe'))
+                        break
+            return upstream_run(cmd, log, cwd=cwd, env=env, quiet=quiet)
+        B.run = windows_run
     if WINDOWS:   # hactool's temporary copy of the base program NCA (17 GB) goes into the work folder, not C:\\
         (work / 'tmp').mkdir(exist_ok=True)
         os.environ['TMP'] = os.environ['TEMP'] = str(work / 'tmp')
@@ -290,7 +311,7 @@ def main(argv):
         raise SystemExit(f'ERROR: {e}')
     for script, args in [('prepare_runtime.py', ['--version', VERSION]), ('prepare_romfs_backend.py', ['--version', VERSION])]:
         with (logs / f'{script}.log').open('w') as log:
-            if subprocess.run([tree / '.venv/bin/python', f'scripts/{script}', *args], cwd=tree, stdout=log,
+            if subprocess.run([venv_command(tree), f'scripts/{script}', *args], cwd=tree, stdout=log,
                               stderr=subprocess.STDOUT).returncode:
                 raise SystemExit(f'{script} failed; see {logs / (script + ".log")}')
     prepare_seed(tree, bins, logs)   # reuses a seed already prepared from the same files and tools
