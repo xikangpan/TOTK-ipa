@@ -169,9 +169,9 @@ jobs:
           git -C mng checkout -q FETCH_HEAD
       - name: Apply external RomFS loader patch
         run: |
-          git -C mng apply --check external-romfs.patch
+          git -C mng apply --check "$env:GITHUB_WORKSPACE/external-romfs.patch"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git -C mng apply external-romfs.patch
+          git -C mng apply "$env:GITHUB_WORKSPACE/external-romfs.patch"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build hactool, SPIRV-Cross and the shader translator for Windows
         run: |
