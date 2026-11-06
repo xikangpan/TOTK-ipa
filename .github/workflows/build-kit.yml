@@ -107,6 +107,10 @@ jobs:
         run: |
           git -C mng apply --check "$GITHUB_WORKSPACE/memory-anywhere.patch"
           git -C mng apply "$GITHUB_WORKSPACE/memory-anywhere.patch"
+      - name: Apply shader-map schema compatibility patch
+        run: |
+          git -C mng apply --check "$GITHUB_WORKSPACE/shader-map-compat.patch"
+          git -C mng apply "$GITHUB_WORKSPACE/shader-map-compat.patch"
       - name: Tools for the iOS build
         run: |
           brew install xcodegen cmake ninja
