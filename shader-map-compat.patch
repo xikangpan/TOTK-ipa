@@ -1,7 +1,7 @@
 diff --git a/games/totk/third_party/d2r_gfx/gfx/nvn/nvn_mtl.m b/games/totk/third_party/d2r_gfx/gfx/nvn/nvn_mtl.m
 --- a/games/totk/third_party/d2r_gfx/gfx/nvn/nvn_mtl.m
 +++ b/games/totk/third_party/d2r_gfx/gfx/nvn/nvn_mtl.m
-@@ -4639,7 +4639,11 @@ static void shmap_load(void) {
+@@ -4639,7 +4639,10 @@ static void shmap_load(void) {
      /* TOTK (2026-10-17): the table's rows are never looked up (a shader's stage comes from its own control section), only
         its folder is used to find pso_manifest.tsv / c1_full.tsv next to it; without the file (the packaged app has none) run on. */
      if (!txt) { MLOG("没有着色器映射表 %s：运行时用不到它的内容（只用它所在的目录找 pso_manifest.tsv），照常运行", path.UTF8String); txt = @"# TOTK control-code-sha256-v1\n"; }
