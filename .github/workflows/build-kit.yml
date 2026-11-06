@@ -107,6 +107,7 @@ jobs:
         run: |
           git -C mng apply --check "$GITHUB_WORKSPACE/memory-anywhere.patch"
           git -C mng apply "$GITHUB_WORKSPACE/memory-anywhere.patch"
+      # The map rows are unused; incompatible old maps must not abort iOS startup.
       - name: Apply shader-map schema compatibility patch
         run: |
           git -C mng apply --check "$GITHUB_WORKSPACE/shader-map-compat.patch"
