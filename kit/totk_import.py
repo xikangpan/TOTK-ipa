@@ -179,11 +179,16 @@ def build_payload(tree, shell, payload, logs):
     res = app / 'GameData'
     res.mkdir(exist_ok=True)
     romfs = tree / f'extracted/{VERSION}/romfs'
-    say('4/4 app: game data (the RomFS is linked, not copied, where the disk allows)')
+    say('4/4 app: preparing external RomFS')
+
     (res / 'romfs').mkdir()
+
+    external = payload.parent / 'ExternalRomFS'
+    external.mkdir(parents=True, exist_ok=True)
+
     for f in romfs.iterdir():
         if f.is_file():
-            link_or_copy(f, res / 'romfs' / f.name)
+            link_or_copy(f, external / f.name)
     for src, dst in [(tree / f'extracted/{VERSION}/romfs-patches', res / 'romfs-patches'),
                      (tree / f'extracted/{VERSION}/romfs-patches-out', res / 'romfs-patches-out'),
                      (tree / 'extracted/firmware/shared-fonts', res / 'shared-fonts')]:
@@ -195,7 +200,7 @@ def build_payload(tree, shell, payload, logs):
 
 
 def write_ipa(payload, out):
-    say(f'4/4 app: writing {out} (stored, not compressed: about 18 GB)')
+    say(f'4/4 app: writing slim IPA {out} (external RomFS excluded)')
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_name(out.name + '.partial')
     executable = payload / 'Payload/TOTK.app/TOTK'

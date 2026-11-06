@@ -1,0 +1,18 @@
+diff --git a/games/totk/ios/Sources/main.m b/games/totk/ios/Sources/main.m
+index 71eef227..059ed3eb 100644
+--- a/games/totk/ios/Sources/main.m
++++ b/games/totk/ios/Sources/main.m
+@@ -116,7 +116,12 @@ static void audio_observe(void) {
+     for (NSString *name in @[@"save", @"temp", @"shader-cache", @"game-slot"]) [fm createDirectoryAtPath:[docs stringByAppendingPathComponent:name] withIntermediateDirectories:YES attributes:nil error:nil];
+     NSString *log = [docs stringByAppendingPathComponent:@"log.txt"];
+     if (freopen(log.fileSystemRepresentation,"w",stderr)) setvbuf(stderr,NULL,_IOLBF,0);
+-    setenv("TOTK_ROMFS",[res stringByAppendingPathComponent:@"romfs"].fileSystemRepresentation,1);
++NSString *externalRomfs = [docs stringByAppendingPathComponent:@"GameData/romfs"];
++[fm createDirectoryAtPath:externalRomfs
++    withIntermediateDirectories:YES
++    attributes:nil
++    error:nil];
++setenv("TOTK_ROMFS",externalRomfs.fileSystemRepresentation,1);
+     setenv("TOTK_OPERATION_MODE","handheld",1);
+     setenv("TOTK_ROMFS_PATCHES",[res stringByAppendingPathComponent:@"romfs-patches"].fileSystemRepresentation,1);
+     setenv("TOTK_ROMFS_PATCHES_OUT",[res stringByAppendingPathComponent:@"romfs-patches-out"].fileSystemRepresentation,1);

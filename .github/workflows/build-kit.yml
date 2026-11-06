@@ -97,6 +97,8 @@ jobs:
           python-version: '3.14'
       - name: Fetch MacNativeGames
         run: git init -q mng && git -C mng fetch -q --depth 1 "$MNG_URL" ${{ needs.resolve.outputs.sha }} && git -C mng checkout -q FETCH_HEAD
+      - name: Apply external RomFS loader patch
+        run: git -C mng apply "$GITHUB_WORKSPACE/external-romfs.patch"
       - name: Tools for the iOS build
         run: |
           brew install xcodegen cmake ninja
