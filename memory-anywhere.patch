@@ -2,7 +2,7 @@ diff --git a/games/totk/runtime/services.c b/games/totk/runtime/services.c
 index 414f53a..8a23579 100644
 --- a/games/totk/runtime/services.c
 +++ b/games/totk/runtime/services.c
-@@ -133,6 +133,54 @@ static void memory_init(void) {
+@@ -135,6 +135,54 @@ static void memory_init(void) {
      to ALIAS_MIN_GIB before giving up (logging the free gaps); TOTK_ALIAS_GIB pins one size. */
   uint64_t want=alias_requested(),least=getenv("TOTK_ALIAS_GIB")?want:(ALIAS_MIN_GIB<<30);
   for(uint64_t a=want;a>=least&&!low_space;a-=1ULL<<30)if((low_space=reserve_in_gap(LOW_SIZE+a,0)))alias_len=a;
