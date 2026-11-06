@@ -1,0 +1,39 @@
+diff --git a/games/totk/runtime/services.c b/games/totk/runtime/services.c
+index 414f53a..8a23579 100644
+--- a/games/totk/runtime/services.c
++++ b/games/totk/runtime/services.c
+@@ -133,7 +133,33 @@ static void memory_init(void) {
+     to ALIAS_MIN_GIB before giving up (logging the free gaps); TOTK_ALIAS_GIB pins one size. */
+  uint64_t want=alias_requested(),least=getenv("TOTK_ALIAS_GIB")?want:(ALIAS_MIN_GIB<<30);
+  for(uint64_t a=want;a>=least&&!low_space;a-=1ULL<<30)if((low_space=reserve_in_gap(LOW_SIZE+a,0)))alias_len=a;
+- if(!low_space){reserve_in_gap(UINT64_MAX,1);runtime_fail("reserve guest stack, heap and alias regions");}
++   if(!low_space){
++   fprintf(stderr,"[totk-mem] fixed reservations failed; trying kernel-selected address\n");
++   for(uint64_t g=want;g>=least&&!low_space;g-=1ULL<<30){
++    mach_vm_address_t addr=0;
++    uint64_t size=LOW_SIZE+g;
++    kern_return_t kr=mach_vm_map(
++     mach_task_self(),&addr,size,GUEST_ALIGN-1,
++     VM_FLAGS_ANYWHERE,MEMORY_OBJECT_NULL,0,FALSE,
++     VM_PROT_NONE,VM_PROT_ALL,VM_INHERIT_DEFAULT);
++    if(kr==KERN_SUCCESS){
++     if(addr>=(1ULL<<32)&&addr<GUEST_ADDRESS_LIMIT&&size<=GUEST_ADDRESS_LIMIT-addr){
++      low_space=(uint8_t *)(uintptr_t)addr;
++      alias_len=g;
++      fprintf(stderr,"[totk-mem] kernel-selected reservation succeeded at %#llx size %.2f GiB\n",
++       (unsigned long long)addr,(double)size/(1024.0*1024.0*1024.0));
++     }else{
++      fprintf(stderr,"[totk-mem] kernel-selected address %#llx outside guest range\n",
++       (unsigned long long)addr);
++      mach_vm_deallocate(mach_task_self(),addr,size);
++     }
++    }else{
++     fprintf(stderr,"[totk-mem] kernel-selected reservation failed size %.2f GiB kr=%d\n",
++      (double)size/(1024.0*1024.0*1024.0),kr);
++    }
++   }
++  }
++  if(!low_space){reserve_in_gap(UINT64_MAX,1);runtime_fail("reserve guest stack, heap and alias regions");}
+  alias_space=low_space+LOW_SIZE;
+ #else
+  alias_space=reserve_fixed(ALIAS_SPACE_AT,ALIAS_SIZE);
