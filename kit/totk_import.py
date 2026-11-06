@@ -278,6 +278,15 @@ def main(argv):
     logs.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     tree = prepare_tree(work, logs)
+    if WINDOWS:
+        venv_python = work / 'venv' / 'Scripts' / 'python.exe'
+        if not venv_python.is_file():
+            raise SystemExit(f'Python virtual environment executable is missing: {venv_python}')
+        # Detect invalid venv launchers before starting the expensive game import.
+        probe = subprocess.run([str(venv_python), '-c', 'import sys; print(sys.executable)'],
+                               capture_output=True, text=True)
+        if probe.returncode:
+            raise SystemExit(f'Windows Python virtual environment cannot start: {probe.stderr.strip()}')
     B.build_hactool = lambda tree, logs: bins / f'hactool{EXE}'   # built by the kit's workflow for this computer
     if WINDOWS:
         # MacNativeGames assumes Unix venv/bin/python and venv/bin/nsz. On
@@ -289,7 +298,12 @@ def main(argv):
                 executable = str(cmd[0]).replace('\\', '/').lower()
                 for name in ('python', 'nsz'):
                     if executable.endswith('/.venv/bin/' + name):
-                        cmd[0] = str(Path(cmd[0]).parent.parent / 'Scripts' / (name + '.exe'))
+                        # The .venv junction lives under the copied source tree.
+                        # Use the real venv directory: junction resolution has proven
+                        # unreliable with CreateProcess on Windows.
+                        cmd[0] = str(work / 'venv' / 'Scripts' / (name + '.exe'))
+                        if not Path(cmd[0]).is_file():
+                            raise B.BuildError(f'Missing Windows build tool: {cmd[0]}. Recreate the work/venv environment.')
                         break
             return upstream_run(cmd, log, cwd=cwd, env=env, quiet=quiet)
         B.run = windows_run
