@@ -123,6 +123,8 @@ jobs:
           brew install xcodegen cmake ninja
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-path
+          # Xcode 26's Metal compiler is an optional component on hosted Intel runners.
+          xcodebuild -downloadComponent MetalToolchain
       - name: Build the app shell (no game files)
         run: python kit/build_shell.py mng out/shell
       - name: Upload build logs
