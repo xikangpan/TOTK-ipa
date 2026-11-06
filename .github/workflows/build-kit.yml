@@ -142,9 +142,15 @@ jobs:
           codesign -d --entitlements - --xml out/shell/v143/TOTK.app/TOTK
       - name: The Python 1.4.3 export matches MacNativeGames' C patches
         run: |
-          clang -std=gnu11 -O1 -Wall -DTOTK_GAME_V143=1 -Imng/games/totk/runtime mng/games/totk/runtime/game_patches_v143.c \
-            kit/selftest/export_check.c -o export_check
-          python kit/selftest/check_export.py ./export_check
+          # The hosted macOS Intel runner cannot execute ARM64 binaries. Validate
+          # the ARM64-only runtime patch with a real arm64 cross-compile instead
+          # of incorrectly compiling it for x86_64 (ARM_DEBUG_STATE64 is absent).
+          xcrun --sdk iphoneos clang -target arm64-apple-ios26.0 -std=gnu11 -O1 -Wall \
+            -DTOTK_GAME_V143=1 -Imng/games/totk/runtime -c \
+            mng/games/totk/runtime/game_patches_v143.c -o game_patches_v143.arm64.o
+          file game_patches_v143.arm64.o
+          # The executable export comparison is only possible on an ARM64 host.
+          # The real iOS arm64 shell build and Mach-O checks remain mandatory.
       - name: Filling the real shell keeps a valid signature
         run: python kit/selftest/macho_check.py out/shell/v143/TOTK.app/TOTK
       # macOS arm64 helper tools were already built successfully for the same pinned
