@@ -118,6 +118,10 @@ jobs:
         run: |
           git -C mng apply --check "$GITHUB_WORKSPACE/shader-map-compat.patch"
           git -C mng apply "$GITHUB_WORKSPACE/shader-map-compat.patch"
+      - name: Accept Windows shader line endings in border-colour emulation
+        run: |
+          git -C mng apply --check "$GITHUB_WORKSPACE/shader-border-newline.patch"
+          git -C mng apply "$GITHUB_WORKSPACE/shader-border-newline.patch"
       - name: Tools for the iOS build
         run: |
           brew install xcodegen cmake ninja
