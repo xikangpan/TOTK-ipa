@@ -1,0 +1,19 @@
+--- a/games/totk/third_party/d2r_gfx/gfx/nvn/nvn_mtl.m
++++ b/games/totk/third_party/d2r_gfx/gfx/nvn/nvn_mtl.m
+@@ -5925,11 +5925,14 @@
+         @"{ return ((axes & 1u) && (uv.x < 0.0 || uv.x > 1.0)) || ((axes & 2u) && (uv.y < 0.0 || uv.y > 1.0)) || ((axes & 4u) && (uv.z < 0.0 || uv.z > 1.0)) ? vec<T, 4>(border) : t.sample(s, uv, a...); }\n"
+         @"template<typename Tex, typename C, typename... A> static inline auto totk_border_sample(float4 border, uint axes, Tex t, sampler s, C uv, A... a) -> decltype(t.sample(s, uv, a...))\n"
+         @"{ return t.sample(s, uv, a...); }\n";
+-    NSRange r = [src rangeOfString:@"using namespace metal;\n"];
++    // Shader sources produced on Windows may use CRLF; do not require a Unix newline.
++    NSRegularExpression *metalNamespace = [NSRegularExpression regularExpressionWithPattern:@"using\\s+namespace\\s+metal\\s*;" options:0 error:nil];
++    NSTextCheckingResult *metalMatch = [metalNamespace firstMatchInString:src options:0 range:NSMakeRange(0, src.length)];
++    NSRange r = metalMatch ? metalMatch.range : NSMakeRange(NSNotFound, 0);
+     if (r.location == NSNotFound) MDIE("shader %s: no 'using namespace metal;' for the border colour helper", sh->key);
+     static int logged; if (logged++ < 16) MLOG("[totk] shader %s: sampler border colour %g %g %g %g emulated in the shader (%d samples; Metal has no such border colour)",
+                                               sh->key, colours[0][0], colours[0][1], colours[0][2], colours[0][3], patched);
+-    return [src stringByReplacingCharactersInRange:NSMakeRange(NSMaxRange(r), 0) withString:helper];
++    return [src stringByReplacingCharactersInRange:NSMakeRange(NSMaxRange(r), 0) withString:[@"\n" stringByAppendingString:helper]];
+ }
+ /* The fragment function for the draw's samplers (border_key), nil when none needs the emulation. */
+ static id<MTLFunction> fs_fn_border(NvShader *fs, int nodepth) {
